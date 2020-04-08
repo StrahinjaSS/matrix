@@ -2,7 +2,7 @@
 # This compose file is compatible with Compose itself, it might need some
 # adjustments to run properly with stack.
 version: '3'
-git@git.seavus.com:Strahinja.Stamenkovi/matrix.git
+
 services:
   synapse:
     # build:
