@@ -1,74 +1,70 @@
-
-# This compose file is compatible with Compose itself, it might need some
-# adjustments to run properly with stack.
-version: '3'
-
+version: "2"
 services:
-  # nginx: 
-  #   image: nginx:latest
-  #   container_name: production_nginx
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf
-  #     - /etc/letsencrypt/:/etc/letsencrypt/
-  #   networks: 
-  #     - web
-  #   ports:
-  #     - 80:80
-  #     - 443:443
-  synapse:
-    # build:
-    #     context: ../..
-    #     dockerfile: docker/Dockerfile
-    image: docker.io/matrixdotorg/synapse:latest
-    # Since synapse does not retry to connect to the database, restart upon
-    # failure
+  postgres:
+    image: postgres:10-alpine
     restart: unless-stopped
-    # See the readme for a full documentation of the environment settings
-    environment:
-      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+    networks:
+      - default
     volumes:
-      # You may either store all the files in a local folder
-      - ./files:/data
-      # .. or you may split this between different storage points
-      # - ./files:/data
-      # - /path/to/ssd:/data/uploads
-      # - /path/to/large_hdd:/data/media
+     - /opt/matrix/pgdata:/var/lib/postgresql/data
+    environment:
+     - POSTGRES_PASSWORD=Pass4now!
+     - POSTGRES_USER=synapse
+     - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    labels:
+      - "traefik.enable=false"
+      
+  sygnal:
+    image: matrixdotorg/sygnal:v0.2.4
+    restart: unless-stopped
+    networks: 
+      - web
+      - default
+    environment: 
+      - SYGNAL_CONF=/etc/sygnal/sygnal.conf
+    volumes:
+      - /opt/matrix/sygnal:/etc/sygnal
+
+  synapse:
+    image: avhost/docker-matrix:v1.0.0
+    restart: unless-stopped
     depends_on:
-      - db
-    # In order to expose Synapse, remove one of the following, you might for
-    # instance expose the TLS port directly:
+      - postgres
     networks:
       - web
       - default
     ports:
-      - 8448:8448/tcp
-    # ... or use a reverse proxy, here is an example for traefik:
-    # labels:
-      # - "traefik.enable=true"
-      # - "traefik.http.routers.traefik1_router_http.rule=Host(`dev-matrix.seavus.com`)"
-      # - "traefik.http.middlewares.https_redirect.redirectscheme.scheme=https"
-      # - "traefik.http.routers.traefik1_router_http.middlewares=https_redirect"
-      # - "traefik.http.routers.traefik1_router_https.rule=Host(`dev-matrix.seavus.com`)"
-      # - "traefik.http.routers.traefik1_router_https.tls"
-      # - "traefik.http.services.traefik1_service.loadbalancer.server.port=8080"
-
-  db:
-    image: docker.io/postgres:10-alpine
-    # Change that password, of course!
-    networks:
-      - default
-    environment:
-      - POSTGRES_USER=synapse
-      - POSTGRES_PASSWORD=changeme
-      # ensure the database gets created correctly
-      # https://github.com/matrix-org/synapse/blob/master/docs/postgres.md#set-up-database
-      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
-      - PGDATA=/tmp
+     # Coturn
+     - "3478:3478"
+     - "5349:5349"
     volumes:
-      # You may store the database tables in a local folder..
-      - ./schemas:/var/lib/postgresql/data
-      # .. or store them on some high performance storage for better results
-      # - /path/to/ssd/storage:/var/lib/postgresql/data
+     - /opt/matrix/synapse:/data
+     - /docker-volumes/etc/letsencrypt/live/dev-matrix.seavus.com/fullchain.pem:/data/fullchain.pem
+     - /docker-volumes/etc/letsencrypt/live/dev-matrix.seavus.com/privkey.pem:/data/privkey.pem
+    labels:
+      - "traefik.backend=synapse"
+      - "traefik.enable=true"
+      - "traefik.frontend=true"
+      - "traefik.port=8008"
+      - "traefik.frontend.rule=Host:dev-matrix.seavus.com"
+      - "traefik.docker.network=web"
+  nginx:
+    image: nginx:1.12-alpine
+    restart: unless-stopped
+    networks:
+      - web
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=Host:dev-matrix.seavus.com"
+      - "traefik.frontend.passHostHeader=true"
+      - "traefik.port=80"
+      - "traefik.docker.network=web"
+    volumes:
+      - ./nginx/matrix.conf:/etc/nginx/conf.d/matrix.conf
+      - ./nginx/www:/var/www/
+      - /docker-volumes/etc/letsencrypt/live/dev-matrix.seavus.com/fullchain.pem:/etc/letsencrypt/live/dev-matrix.seavus.com/fullchain.pem
+      - /docker-volumes/etc/letsencrypt/live/dev-matrix.seavus.com/privkey.pem:/etc/letsencrypt/live/dev-matrix.seavus.com/privkey.pem
 networks:
   default:
     external:
@@ -76,3 +72,18 @@ networks:
   # Traefiks network
   web:
     external: true
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
