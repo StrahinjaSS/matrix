@@ -27,20 +27,25 @@
 #
 # Example Postgres configuration:
 #
+#database:
+#  name: psycopg2
+#  args:
+#    host: localhost
+#    database: sygnal
+#    user: sygnal
+#    password: pass
+#    cp_min: 1
+#    cp_max: 5
+#
 database:
- name: psycopg2
- args:
-   host: postgres
-   database: sygnal
-   user: synapse
-   password: Pass4now!
-   cp_min: 1
-   cp_max: 5
-
-# database:
-#   name: sqlite3
-#   args:
-#     dbfile: sygnal.db
+  name: psycopg2
+  args:
+    host: postgres
+    database: sygnal
+    user: synapse
+    password: Pass4now!
+    cp_min: 1
+    cp_max: 5
 
 ## Logging #
 #
@@ -97,7 +102,6 @@ log:
       handlers: ["stderr"]
       level: "INFO"
 
-
   access:
     # Specify whether or not to trust the IP address in the `X-Forwarded-For`
     # header. In general, you want to enable this if and only if you are using a
@@ -111,7 +115,7 @@ http:
   # Specify a list of interface addresses to bind to.
   #
   # This example listens on the IPv4 loopback device:
-  bind_addresses: ['127.0.0.1']
+  bind_addresses: ["127.0.0.1"]
   # This example listens on all IPv4 interfaces:
   #bind_addresses: ['0.0.0.0']
   # This example listens on all IPv4 and IPv6 interfaces:
@@ -133,7 +137,7 @@ metrics:
 
     # Specify an address for the Prometheus HTTP Server to listen on.
     #
-    address: '127.0.0.1'
+    address: "127.0.0.1"
 
     # Specify a port for the Prometheus HTTP Server to listen on.
     #
@@ -159,11 +163,11 @@ metrics:
     #
     jaeger:
       sampler:
-        type: 'const'
+        type: "const"
         param: 1
-#        local_agent:
-#          reporting_host: '127.0.0.1'
-#          reporting_port:
+      #        local_agent:
+      #          reporting_host: '127.0.0.1'
+      #          reporting_port:
       logging: true
 
   ## Sentry #
@@ -186,11 +190,7 @@ metrics:
 apps:
   # This is an example APNs push configuration using certificate authentication.
   #
-  #com.example.myapp.ios:
-  #  type: apns
-  #  certfile: com.example.myApp_prod_APNS.pem
-  
-  com.seavus.collaboration
+  com.seavus.collaboration.ios:
     type: apns
     certfile: /etc/sygnal/prodapns.pem
 
@@ -205,13 +205,9 @@ apps:
 
   # This is an example GCM/FCM push configuration.
   #
-  #com.example.myapp.android:
-  #  type: gcm
-  #  api_key: your_api_key_for_gcm
-  #  # This is the maximum number of connections to GCM servers at any one time
-  #  # the default is 20.
-  #  #max_connections: 20
-  com.seavus.collaboration
+  com.seavus.collaboration.android:
     type: gcm
     api_key: AAAAOS7ihR8:APA91bHBNgSBVXj4avhdgqHd3Ios8MRkyoXlWB-LTYfdJ3VuoQVAAhSCTT4-kH8nom_RZW-r6HXcp7xS6v4tQjYhRqIj5uz_0iXoC2a9xnJNRuxopwm0QBF-JohwgGz0E21vD4CKr6M-
-    max_connections: 20
+    # This is the maximum number of connections to GCM servers at any one time
+    # the default is 20.
+    # max_connections: 20
